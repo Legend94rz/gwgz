@@ -5,29 +5,33 @@ import os
 
 column = ["卷之一","卷之二","卷之三","卷之四","卷之五","卷之六","卷之七","卷之八","卷之九","卷之十","卷之十一","卷之十二"]
 
-class FnInTextNumbers():
-    def __init__(self, start = 1, prefix = '1.'):
+class FootnoteNumbers():
+    def __init__(self, start = 1, prefix = '1.', type = 'in_text'):
         self.no = start
         self.prefix = prefix
+        self.type=type
+
+    def get_sub(self, match, type=None):
+        t = type
+        if t is None:
+            t=self.type
+        if t=='in_text':
+            return f'<a id="{self.prefix}{self.no}" href="#fn{self.prefix}{self.no}"><sup>[{self.no}]</sup></a>'
+        elif t=='in_notation':
+            return f'<p><a id="fn{self.prefix}{self.no}" href="#{self.prefix}{self.no}">[{self.no}]</a> {match.group(1)} </p>'
+        elif t=='in_text_end':
+            return f'<a id="{self.prefix}{self.no}" href="#fn{self.prefix}{self.no}"><sup></sup></a>\n\n'
+        elif t=='in_notaion_end':
+            return f'<p><a id="fn{self.prefix}{self.no}" href="#{self.prefix}{self.no}"> </a> </p>\n\n'
 
     def __call__(self, match):
-        s = f'<a id="{self.prefix}{self.no}" href="#fn{self.prefix}{self.no}"><sup>[{self.no}]</sup></a>'
-        self.no+=1
-        return s
-
-class FnInNotation():
-    def __init__(self, start=1, prefix='1.'):
-        self.no = start
-        self.prefix = prefix
-
-    def __call__(self, match):
-        s = f'<p><a id="fn{self.prefix}{self.no}" href="#{self.prefix}{self.no}">[{self.no}]</a> {match.group(1)} </p>'
+        s = self.get_sub(match)
         self.no+=1
         return s
 
 def parse_args(argv=sys.argv[1:]):
     parser = argparse.ArgumentParser(description="My Python script.")
-    parser.add_argument("-n", "--number", type=int, default=2, help="Total number of text.")
+    parser.add_argument("-n", "--number", type=int, default=3, help="Total number of text.")
     return parser.parse_args(argv)
 
 def origin(no, lines):
@@ -38,14 +42,16 @@ def origin(no, lines):
         else:
             out+=lines[i]
     out+=lines[-1]
-    fn = FnInTextNumbers(1, f'{no}.')
+    fn = FootnoteNumbers(1, f'{no}.', 'in_text')
     out = re.sub('\[\]', fn, out)
+    out+= fn.get_sub(match=None, type='in_text_end')
     return fn.no, out
 
 def notation(no, lines):
     out = ''.join(lines)
-    fn =  FnInNotation(1, f'{no}.')
+    fn =  FootnoteNumbers(1, f'{no}.', 'in_notation')
     out = re.sub('\[\] (.*)', fn, out)
+    out+=fn.get_sub(match=None, type='in_notaion_end')
     return fn.no, out
 
 def remark(lines):
