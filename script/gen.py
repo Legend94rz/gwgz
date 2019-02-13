@@ -77,7 +77,7 @@ def one_text(folder, file):
             id.append(i)
             if len(id)==len(hd):break
     s = file.rstrip('.md').split('-')
-
+    print(file)
     title = '### %s\t%s\n' % (s[1], s[2])
     no1, text = origin(s[0], lines[id[0]: id[1]])
     no2, nota = notation(s[0], lines[id[1]: id[2]])
@@ -85,6 +85,10 @@ def one_text(folder, file):
     rema = remark(lines[id[2]: id[3]])
     tran = translation(lines[id[3]:])
     return title + text+nota+rema+tran
+
+def sort_file(fd):
+    lst = os.listdir(fd)
+    return sorted(lst, key=lambda x: int(x.rstrip('.md').split('-')[0]))
 
 
 if __name__=="__main__":
@@ -94,11 +98,11 @@ if __name__=="__main__":
     texts = []
     for col in column:
         each_col = f'## 古文觀止 {col}\n'
-        for fn in os.listdir(f'../material/{col}'):
+        for fn in sort_file(f'../material/{col}'):
             p = fn.split('-')
             if int(p[0])>args.number:
-                continue
-            txt = one_text(os.path.join('../material/', col), fn)
+                break
+            txt = one_text(f'../material/{col}', fn)
             each_col+=txt
         texts.append(each_col)
 
